@@ -486,3 +486,23 @@ table.data tbody tr:hover { background: transparent !important; }
 .modal-head button:hover, .keypad button:hover { background: transparent !important; color: inherit !important; }
 .staff-chip:hover { border-color: var(--border) !important; background: var(--surface) !important; }
 #sidebar .nav-item:hover { background: transparent !important; transform: none !important; }
+
+/* Dedicated, independent Driver and Labour portal — no admin workspace chrome. */
+#portalbar { display:block; position:sticky; top:0; z-index:30; background:#fff; border-bottom:1px solid #d9e5f4; padding:14px clamp(14px,3vw,34px) 0; }
+#portalbar.hidden { display:none !important; }
+.portal-head { display:flex; align-items:center; justify-content:space-between; gap:14px; max-width:1180px; margin:0 auto 12px; }
+.portal-brand { display:flex; align-items:center; gap:11px; color:#18365b; }
+.portal-brand .brand-mark { width:42px; height:42px; border-radius:12px; color:#fff; background:#2878df; }
+.portal-brand strong { display:block; font-size:1rem; font-weight:800; }
+.portal-brand small { display:block; margin-top:2px; color:#66809f; font-size:.7rem; letter-spacing:.08em; text-transform:uppercase; }
+.portal-user { display:flex; align-items:center; gap:10px; color:#385574; font-size:.84rem; font-weight:700; }
+.portal-tabs { display:flex; gap:8px; max-width:1180px; margin:0 auto; overflow-x:auto; }
+.portal-tab { border:0; border-bottom:3px solid transparent; background:transparent; color:#536d8c; padding:12px 15px; font-family:inherit; font-size:.9rem; font-weight:600; white-space:nowrap; cursor:pointer; }
+.portal-tab.active { color:#1769d2; border-bottom-color:#1769d2; background:#f1f6ff; }
+body.worker-portal #shell { display:block; min-height:100vh; background:#f5f8fd; }
+body.worker-portal #sidebar, body.worker-portal #topbar, body.worker-portal #mobilenav, body.worker-portal #drawer-backdrop { display:none !important; }
+body.worker-portal #main { width:100%; }
+body.worker-portal #content { max-width:1180px; margin:0 auto; padding:26px clamp(14px,3vw,34px) 60px; }
+body.worker-portal .view-header h1 { color:#17385f; }
+body.worker-portal .card { border:1px solid #e0e9f5; box-shadow:0 8px 24px rgba(30,70,120,.05); }
+@media(max-width:600px) { .portal-head { align-items:flex-start; } .portal-user { flex-direction:column; align-items:flex-end; gap:5px; } .portal-tabs { margin-right:-14px; } body.worker-portal #content { padding-top:18px; } }
