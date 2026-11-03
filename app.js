@@ -445,7 +445,25 @@
     `).join('');
   }
 
+  function renderPortalBar() {
+    const bar = document.getElementById('portalbar');
+    if (!bar) return;
+    const role = state.session && state.session.role;
+    if (role !== 'driver' && role !== 'labour') {
+      bar.classList.add('hidden');
+      document.body.classList.remove('worker-portal');
+      return;
+    }
+    document.body.classList.add('worker-portal');
+    const links = role === 'driver'
+      ? [{ id: 'driver-submit', label: "Today's Deliveries" }, { id: 'driver-my-history', label: 'My Submissions' }]
+      : [{ id: 'labour-log', label: 'Today' }, { id: 'labour-my-shifts', label: 'My Shifts' }, { id: 'labour-my-history', label: 'My Logs' }];
+    bar.classList.remove('hidden');
+    bar.innerHTML = `<div class="portal-head"><div class="portal-brand"><div class="brand-mark">UM</div><div><strong>${esc(state.settings.businessName || 'UMA Management')}</strong><small>${role === 'driver' ? 'Driver Portal' : 'Labour Portal'}</small></div></div><div class="portal-user"><span>${esc(state.session.name || '')}</span><button class="btn btn-sm" data-action="switch-user">Log out</button></div></div><nav class="portal-tabs" aria-label="${role} navigation">${links.map(x => `<button class="portal-tab ${state.route === x.id ? 'active' : ''}" data-action="nav" data-route="${x.id}">${esc(x.label)}</button>`).join('')}</nav>`;
+  }
+
   function renderSidebar() {
+    renderPortalBar();
     const sb = document.getElementById('sidebar');
     sb.innerHTML = `
       <div class="brand"><div class="brand-mark">UM</div><div class="brand-text">${esc(state.settings.businessName || 'UMA Management')}<small>UMA Management</small></div></div>
@@ -1798,6 +1816,7 @@
     const role = state.session ? state.session.role : null;
     if (!roleAllowed(route, role)) { route = role === 'driver' ? 'driver-submit' : role === 'labour' ? 'labour-log' : role === 'staff' ? 'dashboard' : 'dashboard'; }
     state.route = route;
+    renderPortalBar();
     document.getElementById('content').innerHTML = VIEWS[route]();
   }
 
