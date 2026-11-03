@@ -1716,9 +1716,28 @@
   let gateMobileDraft = '';
   let gateAccountChoices = [];
   function accountRole(account) {
-    if (account && account.driverId) return 'driver';
-    if (account && account.labourId) return 'labour';
-    return account && account.role || 'staff';
+    // Prefer linked worker records for worker accounts; otherwise use the
+    // explicit role saved on the current account record.
+    if (!account) return 'staff';
+    if (account.driverId) return 'driver';
+    if (account.labourId) return 'labour';
+    const role = String(account.role || '').toLowerCase();
+    return ['admin', 'manager', 'staff', 'driver', 'labour'].includes(role) ? role : 'staff';
+  }
+  function buildSession(account) {
+    return {
+      staffId: account.id,
+      name: account.name || '',
+      role: accountRole(account),
+      companyId: account.companyId || null,
+      driverId: account.driverId || null,
+      labourId: account.labourId || null
+    };
+  }
+  function landingRouteForRole(role) {
+    if (role === 'driver') return 'driver-submit';
+    if (role === 'labour') return 'labour-log';
+    return 'dashboard';
   }
 
   function renderGate() {
@@ -1785,8 +1804,11 @@
     const staffMember = state.staff.find((s) => s.id === pinTargetStaffId);
     if (!staffMember) return;
     if (pinBuffer === String(staffMember.pin)) {
-      state.session = { staffId: staffMember.id, name: staffMember.name, role: accountRole(staffMember), companyId: staffMember.companyId || null, driverId: staffMember.driverId || null, labourId: staffMember.labourId || null };
+      state.session = buildSession(staffMember);
       try { localStorage.setItem('driverpay_session', JSON.stringify(state.session)); } catch (e) {}
+      // Do not carry a previous user's hash route into this account session.
+      state.route = landingRouteForRole(state.session.role);
+      history.replaceState(null, '', location.pathname + location.search + '#' + state.route);
       pinBuffer = ''; pinTargetStaffId = null; gateStage = 'mobile'; gateMobileDraft = '';
       document.getElementById('gate').innerHTML = ''; document.getElementById('gate').classList.add('hidden');
       boot2();
@@ -2498,11 +2520,22 @@ Rules: "block" is whatever block/route label the note gives, or "" if none is me
     await loadAll();
     let restored = null;
     try { restored = JSON.parse(localStorage.getItem('driverpay_session') || 'null'); } catch (e) {}
-    if (restored && state.staff.find((s) => s.id === restored.staffId && s.active !== false)) {
-      state.session = restored;
+    const authenticatedAccount = restored && state.staff.find((s) => s.id === restored.staffId && s.active !== false);
+    if (authenticatedAccount) {
+      // Refresh the cached session from the database so a stale role from an
+      // older build cannot make a Driver or Labour account open Admin pages.
+      state.session = buildSession(authenticatedAccount);
+      try { localStorage.setItem('driverpay_session', JSON.stringify(state.session)); } catch (e) {}
+      const requestedRoute = location.hash.replace('#', '');
+      state.route = requestedRoute && roleAllowed(requestedRoute, state.session.role)
+        ? requestedRoute
+        : landingRouteForRole(state.session.role);
+      history.replaceState(null, '', location.pathname + location.search + '#' + state.route);
       document.getElementById('gate').innerHTML = ''; document.getElementById('gate').classList.add('hidden');
       boot2();
     } else {
+      try { localStorage.removeItem('driverpay_session'); } catch (e) {}
+      state.session = null;
       renderGate();
     }
     // hot-reload support for the artifact host (state carried across republish, best-effort)
